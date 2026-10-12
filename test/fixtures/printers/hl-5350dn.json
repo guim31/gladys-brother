@@ -1,0 +1,58 @@
+{
+  "model": "HL-5350DN",
+  "source": "bieniu/brother tests/fixtures/hl-5350dn.json (Apache-2.0): wire format rebuilt, serial and MAC invented",
+  "library_printer_type": "laser",
+  "varbinds": {
+    "1.3.6.1.2.1.43.7.1.1.4.1.1": {
+      "type": "integer",
+      "value": 2004
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.10.0": {
+      "type": "octets",
+      "hex": "00010400010f23ff"
+    },
+    "1.3.6.1.2.1.2.2.1.6.1": {
+      "type": "octets",
+      "hex": "008077000009"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.8.0": {
+      "type": "octets",
+      "hex": "110104000061a83101010141010103630101035401010166010101350101013601010162010101ff"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.1.1.7.0": {
+      "type": "octets",
+      "hex": "4d46473a42726f746865723b434d443a504a4c2c50434c2c50434c584c3b4d444c3a484c2d35333530444e207365726965733b434c533a5052494e5445523b"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.11.0": {
+      "type": "octets",
+      "hex": "41010400000000820104000000007301040000777d8601040000961e7701040001205a78010400010af68101040000777d8901040000777dff"
+    },
+    "1.3.6.1.2.1.43.10.2.1.4.1.1": {
+      "type": "counter32",
+      "value": 69411
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.1.0": {
+      "type": "octets",
+      "hex": "4c30303030304a394a303030303039"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.2.0": {
+      "type": "octets",
+      "hex": "454e455247494553504152454e2020200d54524f4d4d454c2045525345545a2e20"
+    },
+    "1.3.6.1.2.1.1.3.0": {
+      "type": "timeticks",
+      "value": 8590
+    }
+  },
+  "library_expected": {
+    "black_toner_status": 21037313,
+    "drum_counter": 25000,
+    "drum_remaining_pages": 0,
+    "fuser_unit_remaining_pages": 30589,
+    "laser_unit_remaining_pages": 30589,
+    "page_counter": 69411,
+    "pf_kit_1_remaining_pages": 73818,
+    "pf_kit_mp_remaining_pages": 38430,
+    "status": "energiesparen trommel ersetz."
+  }
+}

@@ -16,8 +16,8 @@ its only runtime dependency. It started from the official JavaScript template.
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/decode.test.js           # one file
+node --test --test-name-pattern "toner"   # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -31,16 +31,29 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+index.js                          SDK wiring only: src/app.js registers the handlers before connect()
+src/app.js                        every SDK handler -> the monitor (also used by the tests)
+src/monitor.js                    discovery, reading loop, states, transport badge, scene events,
+                                  last reading per printer (widget, scene action)
+src/brother/constants.js          OIDs, Brother block codes -> feature keys, alerts, charsets
+src/brother/decode.js             raw varbinds -> reading (blocks, family, display text, alerts)
+src/brother/reader.js             one GetRequest per printer, noSuchName pruning, OID cache
+src/brother/roman8.js             HP Roman-8 decoder (no TextDecoder for it)
+src/snmp/ber.js, client.js        BER (from gladys-ipp) + multi-OID GetRequest over UDP
+src/features.js                   reading -> Gladys device, features, states; feature names
+src/discovery.js                  mDNS results (scanNetwork) + manual addresses, probed in SNMP
+src/triggers.js                   supply_low steps (with re-arming), new alerts
+src/widgets.js                    `supplies` dashboard widget
+src/scenes.js                     `read_printer` scene action
+src/actions.js                    `test_printer` manifest action
+src/texts.js                      every text of the container, four languages
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
+src/store.js                      /data/brother-state.json (fired steps, last alerts)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en/fr mandatory)
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+test/helpers/fakePrinter.js       simulated Brother SNMP agents answering real BER bytes
+test/fixtures/printers/           14 real printer answers (brother library), wire format
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +83,10 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in four languages (English, French, German,
+  Spanish): action messages, widget texts, feature names, manifest texts, and
+  `docs/en.md`, `docs/fr.md`, `docs/de.md`, `docs/es.md`, kept in sync.
+  `test/i18n.test.js` checks it.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -152,9 +167,11 @@ code de ce dépôt. Compléter ce fichier quand un nouveau piège est découvert
 
 **Widgets, déclencheurs, actions de scène (SDK ≥ 0.14, Gladys ≥ 5.1)**
 
-- **Cibler la dernière version publiée du cœur, pas `master`** : la spec de `master` décrit des
-  fonctions non publiées. Les boutons de widget qui ouvrent un formulaire (#3168, commit 3feb2cf8)
-  sont absents de la 5.1.4 : le bouton s'affiche et n'envoie rien. Vérifier par `git tag --contains`.
+- **Cibler la dernière version publiée du cœur, pas `master`** (5.2.0 au 12/10/2026) : la spec
+  de `master` décrit des fonctions non publiées. Les boutons de widget qui ouvrent un formulaire
+  (#3168, commit 3feb2cf8) étaient absents de la 5.1.4 : le bouton s'affiche et n'envoie rien.
+  Vérifier par `git tag --contains`. Cette intégration n'utilise que des fonctions présentes dès
+  la 5.1.0 (widgets, déclencheurs, actions de scène, `POST /device/transport`).
 
 - Un réglage de widget ne propose en liste que les **appareils** de l'intégration
   (`source: "devices"`, seule source dynamique).
@@ -198,7 +215,96 @@ code de ce dépôt. Compléter ce fichier quand un nouveau piège est découvert
 ### Langues (depuis le 11/10/2026)
 
 Tout texte montré à l'utilisateur existe en **`en`, `fr`, `de` et `es`** : manifeste, contenu des widgets, messages,
-noms de fonctionnalités. L'allemand **tutoie** (« du »), l'espagnol **vouvoie** (« usted ») : décision de Guilhem,
-appliquée à ses 21 intégrations. `test/i18n.test.js` doit échouer sur une langue manquante, un texte vide ou trop
-long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store ne publie que `docs/en.md` et `docs/fr.md`
-(`DOCS_LANGUAGES` d'integration-store) : pas de doc de/es.
+noms de fonctionnalités, documentation. L'allemand **tutoie** (« du »), l'espagnol **vouvoie** (« usted ») : décision
+de Guilhem, appliquée à ses 21 intégrations. `test/i18n.test.js` doit échouer sur une langue manquante, un texte vide
+ou trop long, et sur un « Sie »/« Ihr… » de politesse en allemand (y compris un « Sie » qui voudrait dire « elle » en
+début de phrase : tourner la phrase autrement). L'indexeur du store publie `docs/en.md` et `docs/fr.md`
+(obligatoires) et aussi `docs/de.md` et `docs/es.md` quand ils existent (`DOCS_OPTIONAL_LANGUAGES` dans
+`integration-store/src/constants.js`) : les quatre sont écrites, avec les mêmes sections (vérifié par le test).
+
+---
+
+# Intégration Brother (SNMP)
+
+## Ce qu'elle lit
+
+Une seule requête SNMP GetRequest (v1 par défaut, v2c en option) de 14 OID par imprimante et par
+lecture, comme la bibliothèque Python `brother` (bieniu/brother, Apache-2.0) qu'utilise Home
+Assistant, dont le décodage est porté ici :
+
+- MIB Brother `1.3.6.1.4.1.2435.2.3.9…` : identifiant IEEE 1284 (`MDL:` = modèle, `CID:` =
+  famille), numéro de série (identifiant de l'appareil, en minuscules), firmware, texte de l'écran,
+  et trois blocs binaires : maintenance (`…5.5.8.0`), compteurs (`…5.5.10.0`), « next care »
+  (`…5.5.11.0`, lasers seulement).
+- MIB standard : `sysUpTime`, `prtLocalizationCharacterSet` (jeu de caractères de l'écran),
+  `prtMarkerLifeCount` (compteur des vieux modèles), `ifPhysAddress`, `hrDeviceStatus`,
+  `hrPrinterStatus`, `hrPrinterDetectedErrorState` (alertes, bit 0 = bit de poids fort du premier
+  octet).
+- En v1, un OID absent du modèle donne `noSuchName` + son index et **rien d'autre** : on retire
+  l'OID et on renvoie la requête (jusqu'à 6 échanges la première fois, MFC-J680DW) ; la liste
+  élaguée est gardée par hôte (`oidCache`), une seule requête ensuite. Modèle ou série absent :
+  `UnsupportedPrinterError`. En v2c, une valeur `noSuchObject` par OID absent.
+
+## Décodage (pièges trouvés en le portant)
+
+- Les blocs Brother sont des entrées `code, 0x01, longueur, valeur` terminées par un octet `0xff`
+  (somme de contrôle). La bibliothèque les découpe en morceaux fixes de 7 octets : faux dès qu'une
+  entrée n'a pas 4 octets (HL-5350DN : entrées d'un octet, d'où son `black_toner_status=21037313`).
+  Ici, lecture par longueur : 4 octets = entier ; 2 octets = paire valeur/maximum des vieux modèles
+  (MFC-5490CN, codes `a1`–`a4`) ; 1 octet = sens inconnu, ignoré.
+- Pourcentages en centièmes (`6f`–`72`, tambours, courroie, fusion…) arrondis **au pair le plus
+  proche** (le `round` de Python), pour afficher les mêmes valeurs que Home Assistant. Le
+  réservoir d'encre usagée (`85`) est en pourcentage simple (75 = 75 %), pas en centièmes.
+- Codes `81`–`84` (autre mesure des cartouches) et `31`–`34`, `63` (drapeaux d'état) : non
+  publiés, comme dans Home Assistant.
+- Famille laser / jet d'encre : un choix de l'utilisateur dans Home Assistant, détectée ici (`CID`
+  « Laser » ou « Jpeg/Ink », puis modèle `-J`/`-T` = encre, `-L` = laser, puis codes propres à une
+  famille). Elle change les noms (toner / encre) et les codes lus (pièces laser ignorées sur une jet
+  d'encre, `85` ignoré sur une laser, bloc « next care » ignoré sur une jet d'encre). Indétectable
+  (MFC-5490CN) : « Cartouche noire ». Les **clés** des cartouches sont neutres (`black_cartridge`)
+  pour qu'une détection corrigée plus tard ne change aucun `external_id`.
+- Texte de l'écran : UTF-8 d'abord (DCP-T735DW firmware 1.5 envoie de l'UTF-8 en se déclarant
+  Roman-8), puis le jeu déclaré (`TextDecoder` iso-8859-2/-5/-9 ; HP Roman-8 par table maison).
+  Les lignes d'un écran à deux lignes (séparées par CR) sont jointes par « · ». La casse est
+  gardée (la bibliothèque met tout en minuscules).
+- Les 14 fixtures (`test/fixtures/printers`) sont reconstruites au format filaire depuis celles de
+  la bibliothèque (blocs = morceaux concaténés + `ff`, texte réencodé dans le jeu déclaré), série
+  et MAC inventés ; `library_expected` porte les valeurs de ses snapshots, comparées dans
+  `test/decode.test.js`. Script de reconstruction hors dépôt (une session : le refaire depuis
+  `bieniu/brother/tests/fixtures` et `tests/snapshots/test_init.ambr`).
+
+## Choix de conception
+
+- **Cadence** : minuteur du conteneur (`poll_interval`, 60 s par défaut, 30 à 3600),
+  `should_poll: false`. Imprimantes lues l'une après l'autre ; une lecture en cours est partagée
+  (`inFlight`) entre la boucle, le bouton du widget et l'action de scène. Délai SNMP 2,5 s, 2
+  reprises.
+- **Hors ligne** : déclaré après `UNREACHABLE_AFTER` (2) lectures sans réponse — une imprimante en
+  veille profonde rate parfois une requête — ou tout de suite quand quelqu'un attend la réponse
+  (bouton, action de scène). Badge `unreachable` (`publishTransports`), état « Ne répond pas »
+  dans la langue de la config ; les niveaux gardent leur dernière valeur. Une adresse qui répond
+  avec **un autre numéro de série** (bail DHCP réattribué) compte comme un échec. Après un passage
+  hors ligne, une redécouverte mDNS au plus toutes les 30 min retrouve une imprimante qui a changé
+  d'adresse (les `params` HOST de l'appareil créé sont mis à jour par `publishDiscoveredDevices`).
+- **Déclencheurs** : les filtres de scène ne font qu'égalité. `supply_low` part donc une fois par
+  **palier** franchi (50, 25, 20, 15, 10, 5, 0 %) avec `threshold` en donnée ; la scène choisit son
+  palier dans un `select` obligatoire (défaut 10). Un palier se réarme à palier + 5 points (nouvelle
+  cartouche), pour qu'une estimation qui oscille ne répète pas l'événement. `printer_error` part à
+  l'apparition d'un bit d'alerte. Rien au premier relevé d'une imprimante ; l'état (paliers tirés,
+  dernières alertes) est dans `/data/brother-state.json`, pour qu'un redémarrage ne répète ni ne
+  perde rien.
+- **Widget** : en-tête + 5 jauges + liste + bouton = 8 composants. Jauges : cartouches puis
+  pièces les plus basses, liées à la fonctionnalité de l'appareil créé quand elle existe ; le reste
+  en lignes de la liste (10 au plus, « Dernier relevé » toujours en dernier).
+- Fonctionnalités : cartouches en `level-sensor/liquid-level-percent` (comme gladys-ipp), pièces
+  en `maintenance/life-remaining`, pages et compteurs en `counter-sensor/integer`, temps de
+  fonctionnement en `duration/integer` **en heures** (en secondes, il changerait à chaque lecture).
+- `community` est un champ `secret` de la config (vide = `public`).
+
+## Non vérifié (pas d'imprimante)
+
+- Tout ce qui touche à une vraie imprimante : comportement en veille profonde, délais, firmwares
+  récents, modèles hors fixtures (couleur jet d'encre récents, MFC-L8xxx…).
+- La découverte mDNS par le cœur sur `_printer._tcp` / `_ipp._tcp` (nom d'instance « Brother … »
+  ou TXT `usb_MFG`/`ty`).
+- Le rendu réel du widget et des cartes de scène dans Gladys 5.1/5.2.

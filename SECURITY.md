@@ -30,6 +30,20 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+What the integration handles:
+
+- **Network**: SNMP GetRequests (UDP 161) to the printers' own addresses only —
+  the ones found by the mDNS scan Gladys runs for it and the ones typed in the
+  configuration — one request at a time. It never writes to a printer (no SNMP
+  SET), never broadcasts, and talks to no service outside the local network.
+- **Secrets**: the SNMP community, when another one than `public` is set, is a
+  `secret` field of the configuration, stored by Gladys and never sent back to
+  the browser nor logged.
+- **`/data`**: `brother-state.json` keeps, per printer, the supply levels and
+  alerts of the last reading and the scene trigger steps already fired. No
+  credential is written there.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+the printers' own firmware and SNMP agent, and the security of SNMP v1/v2c
+itself (cleartext community strings: keep the printers on a trusted network).

@@ -1,169 +1,282 @@
 // -----------------------------------------------------------------------------
-// Dashboard widgets (SDK v0.14+, Gladys 5.1+).
+// Dashboard widget `supplies` (Gladys 5.1+): the gauges of one printer's
+// cartridges and wear parts, its status and alerts, and a "Read now" button.
 //
-// A widget puts the integration's own data on the Gladys dashboard without a
-// dedicated core widget. The manifest `widgets` field declares its identity
-// (key, label, icon, optional per-instance `settings`); at runtime the
-// integration returns a DECLARATIVE content — `text`, `value`, `gauge`,
-// `status`, `chart`, `card-list`, `image`, `button` — that the core renders
-// with its own theme, dark mode and translations. No HTML, no CSS.
-//
-// Each entry of WIDGETS is keyed by the widget `key` and exposes:
-//   - get(gladys, { settings, language, units, config }): the content,
-//     registered by index.js with `gladys.onWidgetGet(key, ...)`;
-//   - action(gladys, { actionKey, params, settings, config }) (optional): a
-//     tapped `button` carrying an `action`, registered with
-//     `gladys.onWidgetAction`.
-//
-// Check your contents in the tests with `validateWidgetContent` (exported by
-// the SDK, see test/widgets.test.js), or run with DEBUG=gladys-integration-sdk
-// to have the SDK log every violation of the vocabulary and the budget.
+// Budget of the core: 8 components, 2 texts. Heading + 5 gauges + status +
+// button = 8. The gauges go to the cartridges first, then to the lowest parts;
+// every other supply becomes a row of the status list (10 rows at most). A
+// gauge is bound to the feature of the created device when it has it (live
+// needle); otherwise it carries the value of the last reading. Rendering never
+// queries the printer: only the button does.
 // -----------------------------------------------------------------------------
 
-import {
-  createLogger,
-  DEVICE_FEATURE_CATEGORIES,
-  DEVICE_TRANSPORTS,
-  WIDGET_COLORS,
-} from '@gladysassistant/integration-sdk';
-import { identifyDevice } from './devices/index.js';
-import { weatherStation } from './devices/weatherStation.js';
-import { plug } from './devices/plug.js';
-import { light } from './devices/light.js';
+import { WIDGET_COLORS } from '@gladysassistant/integration-sdk';
+import { FEATURE_BY_KEY, SUPPLY_KEYS } from './features.js';
+import { ERROR_NAMES, LANGUAGES, NOT_RESPONDING, SHORT_NAMES, TEXT, pick } from './texts.js';
+import { WIDGET_KEY } from './monitor.js';
 
-const logger = createLogger({ name: 'widgets' });
+export const READ_ACTION = 'read';
+export const MAX_GAUGES = 5;
+const MAX_STATUS_ITEMS = 10;
+const MAX_ROW_TEXT = 40;
 
-// Widget key, as declared in the manifest `widgets` field.
-export const DEMO_STATUS_WIDGET = 'demo_status';
+// Alerts that stop the printer: red. The others (paper low, toner low...): orange.
+const BLOCKING_ERRORS = new Set([
+  'no_paper',
+  'no_toner',
+  'door_open',
+  'jammed',
+  'offline',
+  'service_requested',
+  'input_tray_missing',
+  'marker_supply_missing',
+  'output_full',
+  'input_tray_empty',
+]);
 
-// Keys of the `button` actions the demo_status content declares.
-const DEMO_STATUS_ACTIONS = { IDENTIFY_LIGHT: 'identify_light' };
-
-// How the plug transport reads in the status list.
-const TRANSPORT_STATUS = {
-  [DEVICE_TRANSPORTS.LOCAL]: { value: { en: 'Local', fr: 'Locale' }, color: WIDGET_COLORS.SUCCESS },
-  [DEVICE_TRANSPORTS.CLOUD]: { value: { en: 'Cloud', fr: 'Cloud' }, color: WIDGET_COLORS.INFO },
-  [DEVICE_TRANSPORTS.UNREACHABLE]: {
-    value: { en: 'Unreachable', fr: 'Injoignable' },
-    color: WIDGET_COLORS.DANGER,
-  },
-};
-
-// A live tile references a feature by its external_id: read it from the
-// discovery payload itself, so the widget and the device never disagree.
-function featureExternalId(gladys, config, blueprint, category) {
-  const device = blueprint.buildDevice(gladys, config);
-  return device.features.find((feature) => feature.category === category).external_id;
+export function widgetLanguage(language) {
+  const short = String(language ?? '')
+    .slice(0, 2)
+    .toLowerCase();
+  return LANGUAGES.includes(short) ? short : 'en';
 }
 
-function plugConnectionStatus(gladys, config) {
-  const { transport, degraded } = plug.transport(gladys, config);
-  const { value, color } = TRANSPORT_STATUS[transport];
-  if (degraded) {
+export function levelColor(percent) {
+  if (percent <= 10) {
+    return WIDGET_COLORS.DANGER;
+  }
+  if (percent <= 25) {
+    return WIDGET_COLORS.WARNING;
+  }
+  return WIDGET_COLORS.SUCCESS;
+}
+
+const cut = (text, max = MAX_ROW_TEXT) =>
+  text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
+
+/**
+ * The supplies of a reading, cartridges first then parts, each with its value.
+ * @returns {Array<{ key: string, value: number, cartridge: boolean }>}
+ */
+export function suppliesOf(reading) {
+  return SUPPLY_KEYS.filter((key) => typeof reading?.values[key] === 'number').map((key) => ({
+    key,
+    value: reading.values[key],
+    cartridge: FEATURE_BY_KEY.get(key).kind === 'cartridge',
+  }));
+}
+
+/** Which supplies get a gauge, which a status row (lowest first). */
+export function splitSupplies(supplies) {
+  const cartridges = supplies.filter((supply) => supply.cartridge);
+  const parts = supplies
+    .filter((supply) => !supply.cartridge)
+    .map((supply, index) => ({ ...supply, index }))
+    .sort((a, b) => a.value - b.value || a.index - b.index);
+  const gauges = [...cartridges, ...parts].slice(0, MAX_GAUGES);
+  const rows = supplies
+    .filter((supply) => !gauges.some((gauged) => gauged.key === supply.key))
+    .sort((a, b) => a.value - b.value);
+  return { gauges, rows };
+}
+
+/** The lowest supply of a reading, or null. */
+export function lowestSupply(reading) {
+  const supplies = suppliesOf(reading);
+  if (supplies.length === 0) {
+    return null;
+  }
+  return supplies.reduce((lowest, supply) => (supply.value < lowest.value ? supply : lowest));
+}
+
+function alertsText(errors, language) {
+  return (errors ?? []).map((error) => pick(ERROR_NAMES, language)[error]).join(', ');
+}
+
+function statusColor(snapshot) {
+  if (snapshot.reachable === false) {
+    return WIDGET_COLORS.DANGER;
+  }
+  const errors = snapshot.reading?.errors ?? [];
+  if (errors.some((error) => BLOCKING_ERRORS.has(error))) {
+    return WIDGET_COLORS.DANGER;
+  }
+  return errors.length > 0 ? WIDGET_COLORS.WARNING : WIDGET_COLORS.SUCCESS;
+}
+
+function formatTime(date, language, now) {
+  const sameDay = date.toDateString() === now.toDateString();
+  return new Intl.DateTimeFormat(
+    language,
+    sameDay ? { hour: '2-digit', minute: '2-digit' } : { dateStyle: 'short', timeStyle: 'short' },
+  ).format(date);
+}
+
+function readButton(device, language) {
+  return {
+    type: 'button',
+    label: pick(TEXT, language).readNow,
+    icon: 'refresh-cw',
+    style: 'secondary',
+    action: { key: READ_ACTION, params: { printer: device.external_id } },
+  };
+}
+
+function gauge(device, supply, language) {
+  const featureId = `${device.external_id}:${supply.key}`;
+  const label = pick(SHORT_NAMES, language)[supply.key];
+  const bound = device.features?.some((feature) => feature.external_id === featureId);
+  return bound
+    ? { type: 'gauge', device_feature: featureId, label, color: levelColor(supply.value) }
+    : {
+        type: 'gauge',
+        value: supply.value,
+        min: 0,
+        max: 100,
+        unit: '%',
+        label,
+        color: levelColor(supply.value),
+      };
+}
+
+/**
+ * Build the widget content.
+ * @param {{ device: object|null, snapshot: object|null, language: string,
+ *           missing?: boolean, now?: Date }} input
+ */
+export function buildSuppliesContent({ device, snapshot, language, missing = false, now }) {
+  const lang = widgetLanguage(language);
+  const text = pick(TEXT, lang);
+  if (!device) {
     return {
-      value: { en: `${value.en} (degraded mode)`, fr: `${value.fr} (mode dégradé)` },
-      color: WIDGET_COLORS.WARNING,
+      ttl_seconds: 300,
+      components: [
+        { type: 'text', variant: 'body', text: missing ? text.missing : text.noPrinter },
+      ],
     };
   }
-  return { value, color };
+  const heading = { type: 'text', variant: 'heading', text: cut(device.name) };
+  const reading = snapshot?.reading ?? null;
+
+  if (!reading) {
+    // Not read yet since the start: bind the gauges to the device's features.
+    const gauges = SUPPLY_KEYS.filter((key) =>
+      device.features?.some((feature) => feature.external_id === `${device.external_id}:${key}`),
+    )
+      .slice(0, MAX_GAUGES)
+      .map((key) => ({
+        type: 'gauge',
+        device_feature: `${device.external_id}:${key}`,
+        label: pick(SHORT_NAMES, lang)[key],
+      }));
+    const waiting =
+      snapshot?.reachable === false ? pick(NOT_RESPONDING, lang) : cut(text.waiting, 80);
+    return {
+      ttl_seconds: 60,
+      components: [
+        heading,
+        ...gauges,
+        { type: 'text', variant: 'caption', text: waiting },
+        readButton(device, lang),
+      ],
+    };
+  }
+
+  const { gauges, rows } = splitSupplies(suppliesOf(reading));
+  const statusValue =
+    snapshot.reachable === false
+      ? pick(NOT_RESPONDING, lang)
+      : (reading.status ?? text.unknownStatus);
+  const fixed = [{ label: text.state, value: cut(statusValue), color: statusColor(snapshot) }];
+  const alerts = snapshot.reachable === false ? '' : alertsText(reading.errors, lang);
+  if (alerts) {
+    fixed.push({ label: text.alerts, value: cut(alerts), color: statusColor(snapshot) });
+  }
+  if (typeof reading.values.page_counter === 'number') {
+    fixed.push({
+      label: text.pages,
+      value: new Intl.NumberFormat(lang).format(reading.values.page_counter),
+      color: WIDGET_COLORS.NEUTRAL,
+    });
+  }
+  const last = snapshot.at
+    ? {
+        label: text.lastReading,
+        value: formatTime(snapshot.at, lang, now ?? new Date()),
+        color: WIDGET_COLORS.NEUTRAL,
+      }
+    : null;
+  const room = MAX_STATUS_ITEMS - fixed.length - (last ? 1 : 0);
+  const supplyRows = rows.slice(0, Math.max(0, room)).map((supply) => ({
+    label: pick(SHORT_NAMES, lang)[supply.key],
+    value: `${supply.value} %`,
+    color: levelColor(supply.value),
+  }));
+
+  return {
+    ttl_seconds: 300,
+    components: [
+      heading,
+      ...gauges.map((supply) => gauge(device, supply, lang)),
+      { type: 'status', items: [...fixed, ...supplyRows, ...(last ? [last] : [])] },
+      readButton(device, lang),
+    ],
+  };
+}
+
+/** One-line summary of a printer, for the toast. */
+export function summary(snapshot, language) {
+  const text = pick(TEXT, language);
+  const status = snapshot?.reading?.status ?? text.unknownStatus;
+  const lowest = lowestSupply(snapshot?.reading);
+  return lowest
+    ? `${status} · ${text.lowest(pick(SHORT_NAMES, language)[lowest.key], lowest.value)}`
+    : status;
+}
+
+/** The printers the widget can show: the created devices (cache re-read once if empty). */
+async function widgetDevices(monitor) {
+  if (monitor.devices.length === 0) {
+    await monitor.reloadDevices().catch(() => {});
+  }
+  return monitor.devices;
 }
 
 export const WIDGETS = {
-  [DEMO_STATUS_WIDGET]: {
-    // `settings` holds the per-instance values of the declared `settings`
-    // (none here); `language` and `units` are those of the user viewing the
-    // dashboard, for the values you format yourself. Multi-language objects
-    // (`{ en, fr }`) are picked by the core, like everywhere else.
-    async get(gladys, { config }) {
-      logger.debug(`onWidgetGet <- ${DEMO_STATUS_WIDGET}`);
-      return {
-        // Reload policy: the computed parts below only change with the
-        // config, and index.js nudges the widget on every (re)connection and
-        // config update (see refreshWidgets) — the TTL is just a safety net.
-        ttl_seconds: 300,
-        components: [
-          // Device-bound tiles: LIVE, they follow the published states over
-          // the core's real-time path. No TTL, no nudge involved.
-          {
-            type: 'value',
-            label: { en: 'Temperature', fr: 'Température' },
-            icon: 'thermometer',
-            device_feature: featureExternalId(
-              gladys,
-              config,
-              weatherStation,
-              DEVICE_FEATURE_CATEGORIES.TEMPERATURE_SENSOR,
-            ),
-          },
-          {
-            type: 'value',
-            label: { en: 'Office plug', fr: 'Prise du bureau' },
-            icon: 'zap',
-            device_feature: featureExternalId(
-              gladys,
-              config,
-              plug,
-              DEVICE_FEATURE_CATEGORIES.ENERGY_SENSOR,
-            ),
-          },
-          // Computed rows: what the integration knows that no device feature
-          // carries. Served from the core cache until the TTL or a nudge.
-          {
-            type: 'status',
-            items: [
-              {
-                label: { en: 'Plug connection', fr: 'Connexion de la prise' },
-                icon: 'wifi',
-                ...plugConnectionStatus(gladys, config),
-              },
-              {
-                label: { en: 'Observed location', fr: 'Position observée' },
-                icon: 'map-pin',
-                value: `${config.latitude.toFixed(2)}, ${config.longitude.toFixed(2)}`,
-                color: WIDGET_COLORS.NEUTRAL,
-              },
-            ],
-          },
-          // `params` are declared HERE and sent back as-is: the handler never
-          // receives user input (a dashboard can hang on a public wall).
-          {
-            type: 'button',
-            label: { en: 'Identify the light', fr: 'Identifier la lampe' },
-            icon: 'eye',
-            style: 'secondary',
-            action: {
-              key: DEMO_STATUS_ACTIONS.IDENTIFY_LIGHT,
-              params: { device: light.deviceExternalId(gladys) },
-            },
-          },
-        ],
-      };
+  [WIDGET_KEY]: {
+    async get(monitor, { settings, language }) {
+      const devices = await widgetDevices(monitor);
+      const wanted = typeof settings?.printer === 'string' && settings.printer !== '';
+      const device = wanted ? (monitor.findDevice(settings.printer) ?? null) : (devices[0] ?? null);
+      return buildSuppliesContent({
+        device,
+        snapshot: device ? monitor.snapshot(device.external_id) : null,
+        language,
+        missing: wanted && !device && devices.length > 0,
+        now: monitor.now(),
+      });
     },
 
-    // Resolve an optional toast (string or multi-language object, ≤ 200
-    // characters). After a successful action the core drops the cached
-    // content and every open dashboard refetches it: no nudge needed.
-    async action(gladys, { actionKey, params, config }) {
-      logger.info(`onWidgetAction <- ${DEMO_STATUS_WIDGET}.${actionKey}`);
-      if (actionKey === DEMO_STATUS_ACTIONS.IDENTIFY_LIGHT) {
-        return identifyDevice(gladys, params.device, config);
+    async action(monitor, { actionKey, params }) {
+      if (actionKey !== READ_ACTION) {
+        throw new Error(`Unknown widget action: ${actionKey}`);
       }
-      // Throwing acks the action as failed: the message reaches the user.
-      throw new Error(`Unknown widget action: ${actionKey}`);
+      await widgetDevices(monitor);
+      const device = monitor.findDevice(params?.printer);
+      if (!device) {
+        throw new Error(`Unknown printer: ${params?.printer}`);
+      }
+      const result = await monitor.pollDevice(device, { force: true, immediate: true });
+      const snapshot = monitor.snapshot(device.external_id);
+      return Object.fromEntries(
+        LANGUAGES.map((lang) => {
+          const text = pick(TEXT, lang);
+          const message = result.ok
+            ? text.toast(device.name, summary(snapshot, lang))
+            : text.unreachableToast(device.name);
+          return [lang, cut(message, 200)];
+        }),
+      );
     },
   },
 };
-
-/**
- * Freshness nudge: ask the core to re-pull every widget NOW instead of
- * waiting for the content TTL. Call it when you KNOW a computed content
- * changed (here: the config, which drives the plug transport and the observed
- * location) — and after every (re)connection, since the nudges are
- * fire-and-forget: rate-limited core-side to 1 per 10 s per widget, dropped
- * silently while disconnected.
- */
-export function refreshWidgets(gladys) {
-  for (const key of Object.keys(WIDGETS)) {
-    gladys.requestWidgetRefresh(key);
-  }
-}

@@ -1,0 +1,92 @@
+{
+  "model": "DCP-9020CDW",
+  "source": "bieniu/brother tests/fixtures/dcp-9020cdw.json (Apache-2.0): wire format rebuilt, serial and MAC invented",
+  "library_printer_type": "laser",
+  "varbinds": {
+    "1.3.6.1.2.1.43.7.1.1.4.1.1": {
+      "type": "integer",
+      "value": 5
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.10.0": {
+      "type": "octets",
+      "hex": "0001040000134b02010400000c69010104000006e21601040000348313010400000a9114010400000aa415010400000c331201040000131bff"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.17.0": {
+      "type": "octets",
+      "hex": "5a4131383131313931323137"
+    },
+    "1.3.6.1.2.1.2.2.1.6.1": {
+      "type": "octets",
+      "hex": "008077000003"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.8.0": {
+      "type": "octets",
+      "hex": "7601040000000177010400000001780104000000017f010400000001680104000000015501040000000131010400000001320104000000013301040000000134010400000001700104000017d4820104000000467101040000170c8301040000003c720104000007d0840104000000146f01040000238c8101040000006479010400001a907a010400001a907b010400001a9080010400001a906901040000206c7301040000134b7401040000134b7501040000134b7e01040000134b54010400000001350104000000016a01040000238c6d0104000023f0ff"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.1.1.7.0": {
+      "type": "octets",
+      "hex": "4d46473a42726f746865723b434d443a504a4c2c4842502c5552463b4d444c3a4443502d39303230434457207365726965733b434c533a5052494e5445523b4349443a42726f74686572204c617365722054797065313b"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.11.0": {
+      "type": "octets",
+      "hex": "a401040000274da501040000274da601040000274da701040000274d8801040000a0c87301040000b0057701040000b2b6ff"
+    },
+    "1.3.6.1.2.1.43.10.2.1.4.1.1": {
+      "type": "counter32",
+      "value": 4939
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.1.0": {
+      "type": "octets",
+      "hex": "45303030303043334a303030303033"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.2.0": {
+      "type": "octets",
+      "hex": "545259422055a65049454e4941202020202020"
+    },
+    "1.3.6.1.2.1.1.3.0": {
+      "type": "timeticks",
+      "value": 7251895
+    }
+  },
+  "library_expected": {
+    "belt_unit_remaining_life": 83,
+    "belt_unit_remaining_pages": 41160,
+    "black_counter": 4891,
+    "black_drum_counter": 4939,
+    "black_drum_remaining_life": 68,
+    "black_drum_remaining_pages": 10061,
+    "black_toner": 100,
+    "black_toner_remaining": 91,
+    "black_toner_status": 1,
+    "bw_counter": 1762,
+    "color_counter": 3177,
+    "cyan_counter": 2705,
+    "cyan_drum_counter": 4939,
+    "cyan_drum_remaining_life": 68,
+    "cyan_drum_remaining_pages": 10061,
+    "cyan_toner": 70,
+    "cyan_toner_remaining": 61,
+    "cyan_toner_status": 1,
+    "fuser_remaining_life": 91,
+    "image_counter": 13443,
+    "laser_unit_remaining_pages": 45061,
+    "magenta_counter": 2724,
+    "magenta_drum_counter": 4939,
+    "magenta_drum_remaining_life": 68,
+    "magenta_drum_remaining_pages": 10061,
+    "magenta_toner": 60,
+    "magenta_toner_remaining": 59,
+    "magenta_toner_status": 1,
+    "page_counter": 4939,
+    "pf_kit_1_remaining_life": 92,
+    "pf_kit_1_remaining_pages": 45750,
+    "status": "tryb uśpienia",
+    "yellow_counter": 3123,
+    "yellow_drum_counter": 4939,
+    "yellow_drum_remaining_life": 68,
+    "yellow_drum_remaining_pages": 10061,
+    "yellow_toner": 20,
+    "yellow_toner_remaining": 20,
+    "yellow_toner_status": 1
+  }
+}
