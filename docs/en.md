@@ -1,61 +1,162 @@
-# Demo Devices Template
+# Brother Printers
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+This integration reads your **Brother** printers and multifunction devices over
+**SNMP**, on your local network: toner or ink levels, drum, belt, fuser and
+other wear parts, page counters, and the message shown on the printer's
+display. No account, no cloud. It requires Gladys 5.1 or newer.
+
+It complements the **IPP Printers** integration, which gives the state and ink
+levels of printers of every brand: Brother printers tell over SNMP what IPP
+does not (drum life, pages left before a part is due, page counters).
+
+> **Developed without the hardware: feedback welcome.** The decoding was tested
+> against real answers of 14 Brother models (the test data of the `brother`
+> library that Home Assistant uses), not on a printer. Please share on the
+> Gladys forum what your model shows, especially if a value looks wrong.
 
 ## What you get
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+One Gladys device per printer, named after its model (`Brother HL-L2350DW`).
+Only what your model reports is created:
+
+| Sensor                                                     | Unit  | Notes                                                       |
+| ---------------------------------------------------------- | ----- | ----------------------------------------------------------- |
+| Status                                                     | text  | The message on the display (`Ready`, `Sleep`, `Paper Jam`…) |
+| Black, cyan, magenta, yellow toner (laser) or ink (inkjet) | %     | Remaining                                                   |
+| Drum, or one drum per colour                               | %     | Remaining life                                              |
+| Belt unit, fuser unit, laser unit, paper feed kits         | %     | Remaining life (lasers that report them)                    |
+| Waste ink box                                              | %     | Remaining capacity (inkjets that report it)                 |
+| Drum, belt, fuser… : pages left                            | pages | Pages before the part is due                                |
+| Pages printed, black and white pages, colour pages, duplex | pages | Counters                                                    |
+| Drum: pages printed                                        | pages | Pages printed with the current drum                         |
+| Uptime                                                     | hours | Time since the printer was switched on                      |
+
+Model, serial number, firmware and MAC address are kept in the device
+parameters. The device's badge says **local** while the printer answers and
+**unreachable** when it stops answering; its status then reads `Not
+responding`. The levels keep their last known value.
+
+## Compatibility
+
+- Brother laser printers and inkjets with a network connection (Wi-Fi or
+  Ethernet): HL, DCP and MFC ranges, including the ink tank models (DCP-T,
+  MFC-T). A few very old models (MFC-8660DN, MFC-8860DN) do not answer.
+- **SNMP must be enabled** on the printer. It is by default; it can be checked
+  in the printer's web page (Network → Protocol → SNMP). Version 1 or 2c, with
+  the `public` read community by default.
+- The printer must be reachable from Gladys in unicast UDP, port 161 (same
+  network, or a route between the two).
 
 ## Configuration
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+1. Install the integration. Printers announcing themselves over mDNS (Bonjour)
+   are found automatically: open the **Discover** tab of the integration and
+   add yours.
+2. If a printer is not found (mDNS blocked, another subnet), enter its **IP
+   address** in **Printers (IP addresses)**, several separated by commas. A
+   `.local` name does not work here. Give the printer a fixed address (DHCP
+   reservation on your router) if you can.
+3. **SNMP community**: leave empty for `public`, the factory setting. If you
+   changed it on the printer, enter the same one here.
+4. **SNMP version**: v1 suits every Brother printer; choose v2c only if v1 is
+   disabled on the printer.
+5. **Reading interval**: 60 seconds by default (30 to 3600). Each reading is
+   a single small SNMP request per printer.
+6. **Language of the names**: the language of the sensor names of the printers
+   you add from now on, and of the texts sent to scenes. Names are fixed when
+   the device is added.
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+The **Test a printer** button reads an IP address now and tells you what
+answers there, without adding anything.
 
-## Actions
+## Dashboard widget
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+**Brother supplies** shows one printer (the first one added if you choose
+none):
 
-## Scenes
+- up to 5 gauges: the cartridges first, then the most worn parts, coloured
+  green, orange (25 % or less) or red (10 % or less);
+- a list with the message on the display, the current alerts (paper jam,
+  cover open…), the pages printed, the other supplies and the time of the last
+  reading;
+- a **Read now** button, which reads the printer at once.
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+## Scene triggers
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+**Printer supply low**: a toner, an ink or a wear part goes down to the chosen
+level (50, 25, 20, 15, 10, 5 % or empty). It fires once, when the level is
+crossed, and again only after the supply went back up (a new cartridge).
+Filters: the printer, the supplies, the level. Information passed on to the
+scene: the printer, the supply, the remaining percentage, the level reached.
 
-## Dashboard
+**Printer alert**: the printer raises an alert, at the moment it appears:
+paper jam, out of paper, paper low, cover open, toner or ink low or empty,
+cartridge missing, tray missing, output tray full, service requested,
+maintenance overdue… Filters: the printer, the alerts. Information passed on
+to the scene: the printer, the alert, the message on the display.
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+Nothing fires at the first reading of a printer: a toner already at 5 % when
+you install the integration is a state, not a change. Restarting Gladys or the
+integration neither repeats nor loses an event.
+
+## Scene action
+
+**Read a printer** reads the printer now and passes on to the next actions of
+the scene: whether it answered, the message on the display, the pages
+printed, the lowest supply and its percentage, the current alerts. Useful in a
+message: "{printer} has printed {pages} pages, lowest supply: {name}
+{percent} %".
+
+## Scene examples
+
+- _Order in time_: **Printer supply low**, supplies = black toner, level = 20
+  % → send a message "Black toner at 20 % on the office printer, time to order
+  one".
+- _Paper jam_: **Printer alert**, alerts = paper jam, out of paper → send a
+  message with the message on the display.
+- _Monthly report_: every 1st of the month at 9:00 → **Read a printer** → send
+  a message with the pages printed and the lowest supply.
+- _Drum to replace_: **Printer supply low**, supplies = drum, level = 10 % →
+  send a message with the supply and the remaining percentage.
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **No printer in the Discover tab**: enter its IP address in the
+  configuration and save; use **Test a printer** to see what answers.
+- **"No SNMP answer"**: check the address, that SNMP is enabled on the
+  printer, and the community. A printer in deep sleep may miss a request; the
+  integration tries again before declaring it unreachable.
+- **"Not a Brother printer this integration can read"**: something answers
+  SNMP at this address, but not with the Brother identification (another
+  printer, a box…).
+- **A sensor is missing**: the printer does not report it. If a part appears
+  later, the **Discover** tab offers to update the device.
+- **A value looks wrong**: please report it on the Gladys forum with your
+  model; the integration logs (level `debug`) show each reading.
+
+## Limits
+
+- Developed without the hardware: the decoding comes from real answers of 14
+  models, not from tests on a printer.
+- Laser or inkjet is detected from what the printer says; on a few old models
+  it cannot be, and the cartridges are then called "Black cartridge"…
+- The alerts come from the standard printer alert register: printers that do
+  not report it never fire **Printer alert** (the status message still
+  changes).
+- The percentages are the printer's own estimates, rounded like Home Assistant
+  does.
+- Read only: the integration never changes a printer setting.
+
+## Network and privacy
+
+Only SNMP requests to the printers' own addresses (UDP 161), one at a time, and
+an mDNS scan through Gladys. Nothing leaves your network. Stored in the
+integration's `/data` volume: the levels and alerts of the last reading of
+each printer, to fire each scene event once.
+
+## Credits
+
+The decoding of the Brother SNMP data is a JavaScript port of the
+[`brother`](https://github.com/bieniu/brother) Python library by Maciej
+Bieniek (Apache 2.0), used by Home Assistant. Brother is a trademark of Brother
+Industries; this integration is not affiliated with Brother.
