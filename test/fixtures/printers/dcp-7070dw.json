@@ -1,0 +1,61 @@
+{
+  "model": "DCP-7070DW",
+  "source": "bieniu/brother tests/fixtures/dcp-7070dw.json (Apache-2.0): wire format rebuilt, serial and MAC invented",
+  "library_printer_type": "laser",
+  "varbinds": {
+    "1.3.6.1.2.1.43.7.1.1.4.1.1": {
+      "type": "integer",
+      "value": 2004
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.10.0": {
+      "type": "octets",
+      "hex": "00010400000a5cff"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.17.0": {
+      "type": "octets",
+      "hex": "55313330373032323132385645522e4a"
+    },
+    "1.3.6.1.2.1.2.2.1.6.1": {
+      "type": "octets",
+      "hex": "008077000002"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.8.0": {
+      "type": "octets",
+      "hex": "630104000000011101040000064341010400002260310104000000016f010400001c20ff"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.1.1.7.0": {
+      "type": "octets",
+      "hex": "4d46473a42726f746865723b434d443a504a4c2c50434c2c50434c584c3b4d444c3a4443502d3730373044573b434c533a5052494e5445523b4349443a42726f74686572204c617365722054797065313b"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.11.0": {
+      "type": "octets",
+      "hex": "8201040000289dff"
+    },
+    "1.3.6.1.2.1.43.10.2.1.4.1.1": {
+      "type": "counter32",
+      "value": 2652
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.1.0": {
+      "type": "octets",
+      "hex": "55303030303042324a303030303032"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.2.0": {
+      "type": "octets",
+      "hex": "537461702e204b6f706965cd6e3a3031"
+    },
+    "1.3.6.1.2.1.1.3.0": {
+      "type": "timeticks",
+      "value": 2987802561
+    }
+  },
+  "library_expected": {
+    "black_toner_remaining": 72,
+    "black_toner_status": 1,
+    "drum_counter": 1603,
+    "drum_remaining_life": 88,
+    "drum_remaining_pages": 10397,
+    "drum_status": 1,
+    "page_counter": 2652,
+    "status": "stap. kopieën:01"
+  }
+}

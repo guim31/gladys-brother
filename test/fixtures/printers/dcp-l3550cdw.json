@@ -1,0 +1,95 @@
+{
+  "model": "DCP-L3550CDW",
+  "source": "bieniu/brother tests/fixtures/dcp-l3550cdw.json (Apache-2.0): wire format rebuilt, serial and MAC invented",
+  "library_printer_type": "laser",
+  "varbinds": {
+    "1.3.6.1.2.1.43.7.1.1.4.1.1": {
+      "type": "integer",
+      "value": 5
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.10.0": {
+      "type": "octets",
+      "hex": "0001040000064b02010400000386010104000002c50601040000021a080104000000ed0701040000012dff"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.17.0": {
+      "type": "octets",
+      "hex": "4a31393036303531343234"
+    },
+    "1.3.6.1.2.1.2.2.1.6.1": {
+      "type": "octets",
+      "hex": "008077000006"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.8.0": {
+      "type": "octets",
+      "hex": "76010400000001790104000023f07301040000064b770104000000017a0104000023f07401040000064b780104000000017b0104000023f07501040000064b7f010400000001800104000023f07e01040000064b680104000000015501040000000132010400000001700104000003e88201040000000a33010400000002710104000003208301040000000a34010400000002720104000000c88401040000000a310104000000016f010400000a288101040000001e690104000025e4350104000000016d010400002648540104000000016a0104000025e4ff"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.1.1.7.0": {
+      "type": "octets",
+      "hex": "4d46473a42726f746865723b434d443a504a4c2c4842502c5552463b4d444c3a4443502d4c333535304344573b434c533a5052494e5445523b4349443a42726f74686572204c617365722054797065313b"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.11.0": {
+      "type": "octets",
+      "hex": "a4010400004005a5010400004005a6010400004005a70104000040058801040000bd347301040000bd057701040000be65ff"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.1.0": {
+      "type": "octets",
+      "hex": "45303030303046364a303030303036"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.2.0": {
+      "type": "octets",
+      "hex": "4d61b36f20746f6e6572752028592920"
+    },
+    "1.3.6.1.2.1.25.3.2.1.5.1": {
+      "type": "integer",
+      "value": 3
+    },
+    "1.3.6.1.2.1.25.3.5.1.1.1": {
+      "type": "integer",
+      "value": 3
+    },
+    "1.3.6.1.2.1.25.3.5.1.2.1": {
+      "type": "octets",
+      "hex": "2800"
+    }
+  },
+  "library_expected": {
+    "belt_unit_remaining_life": 97,
+    "belt_unit_remaining_pages": 48436,
+    "black_drum_counter": 1611,
+    "black_drum_remaining_life": 92,
+    "black_drum_remaining_pages": 16389,
+    "black_toner": 30,
+    "black_toner_remaining": 26,
+    "black_toner_status": 1,
+    "bw_counter": 709,
+    "color_counter": 902,
+    "cyan_drum_counter": 1611,
+    "cyan_drum_remaining_life": 92,
+    "cyan_drum_remaining_pages": 16389,
+    "cyan_toner": 10,
+    "cyan_toner_remaining": 10,
+    "cyan_toner_status": 1,
+    "device_status": "warning",
+    "duplex_unit_pages_counter": 538,
+    "fuser_remaining_life": 97,
+    "laser_unit_remaining_pages": 48389,
+    "magenta_drum_counter": 1611,
+    "magenta_drum_remaining_life": 92,
+    "magenta_drum_remaining_pages": 16389,
+    "magenta_toner": 10,
+    "magenta_toner_remaining": 8,
+    "magenta_toner_status": 2,
+    "page_counter": 1611,
+    "pf_kit_1_remaining_life": 98,
+    "pf_kit_1_remaining_pages": 48741,
+    "printer_errors": ["low_toner", "door_open"],
+    "printer_status": "idle",
+    "status": "mało toneru (y)",
+    "yellow_drum_counter": 1611,
+    "yellow_drum_remaining_life": 92,
+    "yellow_drum_remaining_pages": 16389,
+    "yellow_toner": 10,
+    "yellow_toner_remaining": 2,
+    "yellow_toner_status": 2
+  }
+}

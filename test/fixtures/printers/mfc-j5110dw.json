@@ -1,0 +1,85 @@
+{
+  "model": "MFC-J5110DW",
+  "source": "bieniu/brother tests/fixtures/mfc-j5110dw.json (Apache-2.0): wire format rebuilt, serial and MAC invented",
+  "library_printer_type": "ink",
+  "varbinds": {
+    "1.3.6.1.2.1.43.7.1.1.4.1.1": {
+      "type": "integer",
+      "value": 106
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.10.0": {
+      "type": "octets",
+      "hex": "00010400000d38010104000000b902010400000c7fff"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.17.0": {
+      "type": "octets",
+      "hex": "4d32303039303431383438"
+    },
+    "1.3.6.1.2.1.2.2.1.6.1": {
+      "type": "octets",
+      "hex": "00807700000c"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.8.0": {
+      "type": "octets",
+      "hex": "310104000000013201040000000133010400000001340104000000016f0104000026ac700104000026ac710104000026ac720104000026ac810104000000638201040000006383010400000063840104000000638501040000004bff"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.1.1.7.0": {
+      "type": "octets",
+      "hex": "4d46473a42726f746865723b434d443a4842502c504a4c3b4d444c3a4d46432d4a3531313044573b434c533a5052494e5445523b"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.11.0": {
+      "type": "octets",
+      "hex": "ff"
+    },
+    "1.3.6.1.2.1.43.10.2.1.4.1.1": {
+      "type": "counter32",
+      "value": 3384
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.5.1.0": {
+      "type": "octets",
+      "hex": "4530303030304d3347303030303132"
+    },
+    "1.3.6.1.4.1.2435.2.3.9.4.2.1.5.4.5.2.0": {
+      "type": "octets",
+      "hex": "5265616479"
+    },
+    "1.3.6.1.2.1.1.3.0": {
+      "type": "timeticks",
+      "value": 41956200
+    },
+    "1.3.6.1.2.1.25.3.2.1.5.1": {
+      "type": "integer",
+      "value": 2
+    },
+    "1.3.6.1.2.1.25.3.5.1.1.1": {
+      "type": "integer",
+      "value": 3
+    },
+    "1.3.6.1.2.1.25.3.5.1.2.1": {
+      "type": "octets",
+      "hex": "00"
+    }
+  },
+  "library_expected": {
+    "black_ink": 99,
+    "black_ink_remaining": 99,
+    "black_ink_status": 1,
+    "bw_counter": 185,
+    "color_counter": 3199,
+    "cyan_ink": 99,
+    "cyan_ink_remaining": 99,
+    "cyan_ink_status": 1,
+    "device_status": "running",
+    "ink_capture_box_remaining_life": 75,
+    "magenta_ink": 99,
+    "magenta_ink_remaining": 99,
+    "magenta_ink_status": 1,
+    "page_counter": 3384,
+    "printer_errors": [],
+    "printer_status": "idle",
+    "status": "ready",
+    "yellow_ink": 99,
+    "yellow_ink_remaining": 99,
+    "yellow_ink_status": 1
+  }
+}

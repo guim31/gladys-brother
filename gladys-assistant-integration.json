@@ -1,101 +1,179 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Brother Printers",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Toner, ink, drum and page counters of your Brother printers over SNMP. Local, no cloud.",
+    "fr": "Toner, encre, tambour et compteurs de pages de vos imprimantes Brother en SNMP. Local.",
+    "de": "Toner, Tinte, Trommel und Seitenzähler deiner Brother-Drucker per SNMP. Lokal, ohne Cloud.",
+    "es": "Tóner, tinta, tambor y contadores de páginas de sus impresoras Brother por SNMP. Local."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-brother:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "categories": ["appliances", "network"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-brother/main/cover.png",
+  "transports": ["local"],
+  "network_discovery": [
+    { "type": "mdns", "service": "_printer._tcp" },
+    { "type": "mdns", "service": "_ipp._tcp" }
+  ],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
-      "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+      "label": {
+        "en": "How it works",
+        "fr": "Fonctionnement",
+        "de": "Funktionsweise",
+        "es": "Funcionamiento"
       },
-      "links": [
+      "description": {
+        "en": "Brother printers on your network are found automatically (mDNS) and read over SNMP: toner or ink, drum, belt, fuser and other wear parts, page counters and the message on the display. SNMP must be enabled on the printer (it is by default). Add the IP address below if a printer is not found.",
+        "fr": "Les imprimantes Brother de votre réseau sont trouvées automatiquement (mDNS) et lues en SNMP : toner ou encre, tambour, courroie, unité de fusion et autres pièces d'usure, compteurs de pages et message de l'écran. Le SNMP doit être activé sur l'imprimante (il l'est par défaut). Saisissez l'adresse IP ci-dessous si une imprimante n'est pas trouvée.",
+        "de": "Brother-Drucker in deinem Netzwerk werden automatisch gefunden (mDNS) und per SNMP gelesen: Toner oder Tinte, Trommel, Transfereinheit, Fixiereinheit und weitere Verschleißteile, Seitenzähler und die Meldung im Display. SNMP muss am Drucker aktiviert sein (ab Werk ist es das). Trage unten die IP-Adresse ein, wenn ein Drucker nicht gefunden wird.",
+        "es": "Las impresoras Brother de su red se encuentran automáticamente (mDNS) y se leen por SNMP: tóner o tinta, tambor, correa, unidad de fusión y otras piezas de desgaste, contadores de páginas y el mensaje de la pantalla. SNMP debe estar activado en la impresora (lo está de fábrica). Introduzca la dirección IP abajo si no se encuentra una impresora."
+      }
+    },
+    {
+      "key": "printer_hosts",
+      "type": "string",
+      "label": {
+        "en": "Printers (IP addresses)",
+        "fr": "Imprimantes (adresses IP)",
+        "de": "Drucker (IP-Adressen)",
+        "es": "Impresoras (direcciones IP)"
+      },
+      "description": {
+        "en": "Optional. IP addresses separated by commas, for printers the automatic discovery does not find. A .local name does not work here.",
+        "fr": "Optionnel. Adresses IP séparées par des virgules, pour les imprimantes que la découverte automatique ne trouve pas. Un nom .local ne fonctionne pas ici.",
+        "de": "Optional. IP-Adressen, durch Kommas getrennt, für Drucker, die die automatische Erkennung nicht findet. Ein .local-Name funktioniert hier nicht.",
+        "es": "Opcional. Direcciones IP separadas por comas, para las impresoras que el descubrimiento automático no encuentra. Un nombre .local no funciona aquí."
+      },
+      "placeholder": {
+        "en": "e.g. 192.168.1.20, 192.168.1.21",
+        "fr": "ex. 192.168.1.20, 192.168.1.21",
+        "de": "z. B. 192.168.1.20, 192.168.1.21",
+        "es": "p. ej. 192.168.1.20, 192.168.1.21"
+      },
+      "required": false
+    },
+    {
+      "key": "community",
+      "type": "secret",
+      "label": {
+        "en": "SNMP community",
+        "fr": "Communauté SNMP",
+        "de": "SNMP-Community",
+        "es": "Comunidad SNMP"
+      },
+      "description": {
+        "en": "Leave empty to use \"public\", the printer's factory setting.",
+        "fr": "Laissez vide pour utiliser « public », le réglage d'usine de l'imprimante.",
+        "de": "Leer lassen, um „public“ zu verwenden, die Werkseinstellung des Druckers.",
+        "es": "Déjelo vacío para usar «public», el ajuste de fábrica de la impresora."
+      },
+      "required": false
+    },
+    {
+      "key": "snmp_version",
+      "type": "select",
+      "label": {
+        "en": "SNMP version",
+        "fr": "Version SNMP",
+        "de": "SNMP-Version",
+        "es": "Versión de SNMP"
+      },
+      "description": {
+        "en": "v1 works with every Brother printer. Choose v2c only if v1 is disabled on the printer.",
+        "fr": "La v1 fonctionne avec toutes les imprimantes Brother. Choisissez la v2c seulement si la v1 est désactivée sur l'imprimante.",
+        "de": "v1 funktioniert mit jedem Brother-Drucker. Wähle v2c nur, wenn v1 am Drucker deaktiviert ist.",
+        "es": "La v1 funciona con todas las impresoras Brother. Elija la v2c solo si la v1 está desactivada en la impresora."
+      },
+      "required": false,
+      "default": "1",
+      "options": [
+        { "value": "1", "label": { "en": "v1", "fr": "v1", "de": "v1", "es": "v1" } },
+        { "value": "2c", "label": { "en": "v2c", "fr": "v2c", "de": "v2c", "es": "v2c" } }
+      ]
+    },
+    {
+      "key": "poll_interval",
+      "type": "number",
+      "label": {
+        "en": "Reading interval (s)",
+        "fr": "Intervalle de lecture (s)",
+        "de": "Abfrageintervall (s)",
+        "es": "Intervalo de lectura (s)"
+      },
+      "description": {
+        "en": "How often each printer is read, in seconds (one small SNMP request). 60 s reports a paper jam within a minute.",
+        "fr": "Fréquence de lecture de chaque imprimante, en secondes (une petite requête SNMP). 60 s signalent un bourrage en moins d'une minute.",
+        "de": "Wie oft jeder Drucker abgefragt wird, in Sekunden (eine kleine SNMP-Anfrage). Mit 60 s wird ein Papierstau innerhalb einer Minute gemeldet.",
+        "es": "Frecuencia de lectura de cada impresora, en segundos (una pequeña petición SNMP). Con 60 s, un atasco se señala en menos de un minuto."
+      },
+      "required": false,
+      "default": 60,
+      "min": 30,
+      "max": 3600
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of the names",
+        "fr": "Langue des noms",
+        "de": "Sprache der Namen",
+        "es": "Idioma de los nombres"
+      },
+      "description": {
+        "en": "Names of the sensors of newly added printers, and texts sent to scenes.",
+        "fr": "Noms des capteurs des imprimantes nouvellement ajoutées, et textes envoyés aux scènes.",
+        "de": "Namen der Sensoren neu hinzugefügter Drucker und Texte, die an Szenen gehen.",
+        "es": "Nombres de los sensores de las impresoras añadidas a partir de ahora, y textos enviados a las escenas."
+      },
+      "required": false,
+      "default": "en",
+      "options": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "value": "en",
+          "label": { "en": "English", "fr": "Anglais", "de": "Englisch", "es": "Inglés" }
+        },
+        {
+          "value": "fr",
+          "label": { "en": "French", "fr": "Français", "de": "Französisch", "es": "Francés" }
+        },
+        {
+          "value": "de",
+          "label": { "en": "German", "fr": "Allemand", "de": "Deutsch", "es": "Alemán" }
+        },
+        {
+          "value": "es",
+          "label": { "en": "Spanish", "fr": "Espagnol", "de": "Spanisch", "es": "Español" }
         }
       ]
-    },
-    {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
-      "required": false,
-      "default": "celsius",
-      "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
-      ]
-    },
-    {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
-      "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
-      },
-      "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
+      "key": "test_printer",
+      "label": {
+        "en": "Test a printer",
+        "fr": "Tester une imprimante",
+        "de": "Drucker testen",
+        "es": "Probar una impresora"
+      },
+      "timeout_seconds": 30,
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "key": "host",
+          "type": "string",
+          "label": {
+            "en": "IP address",
+            "fr": "Adresse IP",
+            "de": "IP-Adresse",
+            "es": "Dirección IP"
+          },
           "required": true
         }
       ]
@@ -103,75 +181,585 @@
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "supply_low",
+      "label": {
+        "en": "Printer supply low",
+        "fr": "Consommable d'imprimante bas",
+        "de": "Druckerverbrauchsmaterial niedrig",
+        "es": "Consumible de impresora bajo"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "A toner, ink or wear part goes down to the chosen level. Fires once, again only after a replacement.",
+        "fr": "Un toner, une encre ou une pièce d'usure descend au niveau choisi. Une seule fois, puis après remplacement.",
+        "de": "Ein Toner, eine Tinte oder ein Verschleißteil sinkt auf die gewählte Stufe. Einmal, erst nach Austausch wieder.",
+        "es": "Un tóner, una tinta o una pieza de desgaste baja al nivel elegido. Una vez, de nuevo tras sustituirlo."
       },
       "fields": [
         {
-          "key": "device",
+          "key": "printer",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": {
+            "en": "Printer",
+            "fr": "Imprimante",
+            "de": "Drucker",
+            "es": "Impresora"
+          }
         },
         {
-          "key": "target",
+          "key": "supply",
           "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "label": {
+            "en": "Supplies",
+            "fr": "Consommables",
+            "de": "Verbrauchsmaterial",
+            "es": "Consumibles"
+          },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "black_cartridge",
+              "label": {
+                "en": "Black toner or ink",
+                "fr": "Toner ou encre noir",
+                "de": "Toner oder Tinte Schwarz",
+                "es": "Tóner o tinta negro"
+              }
+            },
+            {
+              "value": "cyan_cartridge",
+              "label": {
+                "en": "Cyan toner or ink",
+                "fr": "Toner ou encre cyan",
+                "de": "Toner oder Tinte Cyan",
+                "es": "Tóner o tinta cian"
+              }
+            },
+            {
+              "value": "magenta_cartridge",
+              "label": {
+                "en": "Magenta toner or ink",
+                "fr": "Toner ou encre magenta",
+                "de": "Toner oder Tinte Magenta",
+                "es": "Tóner o tinta magenta"
+              }
+            },
+            {
+              "value": "yellow_cartridge",
+              "label": {
+                "en": "Yellow toner or ink",
+                "fr": "Toner ou encre jaune",
+                "de": "Toner oder Tinte Gelb",
+                "es": "Tóner o tinta amarillo"
+              }
+            },
+            {
+              "value": "drum",
+              "label": { "en": "Drum", "fr": "Tambour", "de": "Trommel", "es": "Tambor" }
+            },
+            {
+              "value": "black_drum",
+              "label": {
+                "en": "Black drum",
+                "fr": "Tambour noir",
+                "de": "Trommel Schwarz",
+                "es": "Tambor negro"
+              }
+            },
+            {
+              "value": "cyan_drum",
+              "label": {
+                "en": "Cyan drum",
+                "fr": "Tambour cyan",
+                "de": "Trommel Cyan",
+                "es": "Tambor cian"
+              }
+            },
+            {
+              "value": "magenta_drum",
+              "label": {
+                "en": "Magenta drum",
+                "fr": "Tambour magenta",
+                "de": "Trommel Magenta",
+                "es": "Tambor magenta"
+              }
+            },
+            {
+              "value": "yellow_drum",
+              "label": {
+                "en": "Yellow drum",
+                "fr": "Tambour jaune",
+                "de": "Trommel Gelb",
+                "es": "Tambor amarillo"
+              }
+            },
+            {
+              "value": "belt",
+              "label": {
+                "en": "Belt unit",
+                "fr": "Courroie",
+                "de": "Transfereinheit",
+                "es": "Unidad de correa"
+              }
+            },
+            {
+              "value": "fuser",
+              "label": {
+                "en": "Fuser unit",
+                "fr": "Unité de fusion",
+                "de": "Fixiereinheit",
+                "es": "Unidad de fusión"
+              }
+            },
+            {
+              "value": "laser_unit",
+              "label": {
+                "en": "Laser unit",
+                "fr": "Unité laser",
+                "de": "Lasereinheit",
+                "es": "Unidad láser"
+              }
+            },
+            {
+              "value": "pf_kit_1",
+              "label": {
+                "en": "Paper feed kit (tray 1)",
+                "fr": "Kit d'alimentation (bac 1)",
+                "de": "Papiereinzugskit (Fach 1)",
+                "es": "Kit de alimentación (bandeja 1)"
+              }
+            },
+            {
+              "value": "pf_kit_mp",
+              "label": {
+                "en": "Paper feed kit (MP tray)",
+                "fr": "Kit d'alimentation (bac MU)",
+                "de": "Papiereinzugskit (MF-Zufuhr)",
+                "es": "Kit de alimentación (bandeja MP)"
+              }
+            },
+            {
+              "value": "waste_ink_box",
+              "label": {
+                "en": "Waste ink box",
+                "fr": "Réservoir d'encre usagée",
+                "de": "Tintenauffangbehälter",
+                "es": "Depósito de tinta residual"
+              }
+            }
+          ]
+        },
+        {
+          "key": "threshold",
+          "type": "select",
+          "label": {
+            "en": "Level reached",
+            "fr": "Niveau atteint",
+            "de": "Erreichte Stufe",
+            "es": "Nivel alcanzado"
+          },
+          "required": true,
+          "default": "10",
+          "options": [
+            { "value": "50", "label": { "en": "50 %", "fr": "50 %", "de": "50 %", "es": "50 %" } },
+            { "value": "25", "label": { "en": "25 %", "fr": "25 %", "de": "25 %", "es": "25 %" } },
+            { "value": "20", "label": { "en": "20 %", "fr": "20 %", "de": "20 %", "es": "20 %" } },
+            { "value": "15", "label": { "en": "15 %", "fr": "15 %", "de": "15 %", "es": "15 %" } },
+            { "value": "10", "label": { "en": "10 %", "fr": "10 %", "de": "10 %", "es": "10 %" } },
+            { "value": "5", "label": { "en": "5 %", "fr": "5 %", "de": "5 %", "es": "5 %" } },
+            {
+              "value": "0",
+              "label": {
+                "en": "Empty (0 %)",
+                "fr": "Vide (0 %)",
+                "de": "Leer (0 %)",
+                "es": "Vacío (0 %)"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "printer_name",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Printer",
+            "fr": "Imprimante",
+            "de": "Drucker",
+            "es": "Impresora"
+          }
+        },
+        {
+          "key": "supply_name",
+          "type": "string",
+          "label": {
+            "en": "Supply",
+            "fr": "Consommable",
+            "de": "Verbrauchsmaterial",
+            "es": "Consumible"
+          }
+        },
+        {
+          "key": "percent",
+          "type": "number",
+          "label": {
+            "en": "Remaining (%)",
+            "fr": "Restant (%)",
+            "de": "Verbleibend (%)",
+            "es": "Restante (%)"
+          }
+        },
+        {
+          "key": "threshold",
+          "type": "number",
+          "label": {
+            "en": "Level reached (%)",
+            "fr": "Niveau atteint (%)",
+            "de": "Erreichte Stufe (%)",
+            "es": "Nivel alcanzado (%)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "printer_error",
+      "label": {
+        "en": "Printer alert",
+        "fr": "Alerte d'imprimante",
+        "de": "Druckermeldung",
+        "es": "Alerta de impresora"
+      },
+      "description": {
+        "en": "The printer raises an alert: paper jam, out of paper, cover open… Fires when the alert appears.",
+        "fr": "L'imprimante lève une alerte : bourrage, plus de papier, capot ouvert… Au moment où elle apparaît.",
+        "de": "Der Drucker meldet etwas: Papierstau, kein Papier, Abdeckung offen… Sobald die Meldung erscheint.",
+        "es": "La impresora emite una alerta: atasco, sin papel, cubierta abierta… En el momento en que aparece."
+      },
+      "fields": [
+        {
+          "key": "printer",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Printer",
+            "fr": "Imprimante",
+            "de": "Drucker",
+            "es": "Impresora"
+          }
+        },
+        {
+          "key": "error",
+          "type": "multi_select",
+          "label": {
+            "en": "Alerts",
+            "fr": "Alertes",
+            "de": "Meldungen",
+            "es": "Alertas"
+          },
+          "options": [
+            {
+              "value": "jammed",
+              "label": {
+                "en": "Paper jam",
+                "fr": "Bourrage papier",
+                "de": "Papierstau",
+                "es": "Atasco de papel"
+              }
+            },
+            {
+              "value": "no_paper",
+              "label": {
+                "en": "Out of paper",
+                "fr": "Plus de papier",
+                "de": "Kein Papier",
+                "es": "Sin papel"
+              }
+            },
+            {
+              "value": "low_paper",
+              "label": {
+                "en": "Paper low",
+                "fr": "Papier bas",
+                "de": "Wenig Papier",
+                "es": "Poco papel"
+              }
+            },
+            {
+              "value": "input_tray_empty",
+              "label": {
+                "en": "Paper tray empty",
+                "fr": "Bac à papier vide",
+                "de": "Papierfach leer",
+                "es": "Bandeja de papel vacía"
+              }
+            },
+            {
+              "value": "door_open",
+              "label": {
+                "en": "Cover open",
+                "fr": "Capot ouvert",
+                "de": "Abdeckung offen",
+                "es": "Cubierta abierta"
+              }
+            },
+            {
+              "value": "low_toner",
+              "label": {
+                "en": "Toner or ink low",
+                "fr": "Toner ou encre bas",
+                "de": "Toner oder Tinte fast leer",
+                "es": "Tóner o tinta bajo"
+              }
+            },
+            {
+              "value": "no_toner",
+              "label": {
+                "en": "Toner or ink empty",
+                "fr": "Toner ou encre vide",
+                "de": "Toner oder Tinte leer",
+                "es": "Tóner o tinta agotado"
+              }
+            },
+            {
+              "value": "marker_supply_missing",
+              "label": {
+                "en": "Cartridge missing",
+                "fr": "Cartouche absente",
+                "de": "Patrone fehlt",
+                "es": "Falta un cartucho"
+              }
+            },
+            {
+              "value": "input_tray_missing",
+              "label": {
+                "en": "Paper tray missing",
+                "fr": "Bac à papier absent",
+                "de": "Papierfach fehlt",
+                "es": "Falta la bandeja de papel"
+              }
+            },
+            {
+              "value": "output_tray_missing",
+              "label": {
+                "en": "Output tray missing",
+                "fr": "Bac de sortie absent",
+                "de": "Ausgabefach fehlt",
+                "es": "Falta la bandeja de salida"
+              }
+            },
+            {
+              "value": "output_near_full",
+              "label": {
+                "en": "Output tray almost full",
+                "fr": "Bac de sortie presque plein",
+                "de": "Ausgabefach fast voll",
+                "es": "Bandeja de salida casi llena"
+              }
+            },
+            {
+              "value": "output_full",
+              "label": {
+                "en": "Output tray full",
+                "fr": "Bac de sortie plein",
+                "de": "Ausgabefach voll",
+                "es": "Bandeja de salida llena"
+              }
+            },
+            {
+              "value": "service_requested",
+              "label": {
+                "en": "Service requested",
+                "fr": "Intervention demandée",
+                "de": "Wartung angefordert",
+                "es": "Se solicita servicio técnico"
+              }
+            },
+            {
+              "value": "overdue_prevent_maint",
+              "label": {
+                "en": "Maintenance overdue",
+                "fr": "Entretien en retard",
+                "de": "Wartung überfällig",
+                "es": "Mantenimiento atrasado"
+              }
+            },
+            {
+              "value": "offline",
+              "label": {
+                "en": "Offline",
+                "fr": "Hors ligne",
+                "de": "Offline",
+                "es": "Fuera de línea"
+              }
+            }
+          ]
+        }
+      ],
+      "variables": [
+        {
+          "key": "printer_name",
+          "type": "string",
+          "label": {
+            "en": "Printer",
+            "fr": "Imprimante",
+            "de": "Drucker",
+            "es": "Impresora"
+          }
+        },
+        {
+          "key": "error_name",
+          "type": "string",
+          "label": {
+            "en": "Alert",
+            "fr": "Alerte",
+            "de": "Meldung",
+            "es": "Alerta"
+          }
+        },
+        {
+          "key": "status",
+          "type": "string",
+          "label": {
+            "en": "Message on the display",
+            "fr": "Message de l'écran",
+            "de": "Meldung im Display",
+            "es": "Mensaje de la pantalla"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "read_printer",
+      "label": {
+        "en": "Read a printer",
+        "fr": "Relire une imprimante",
+        "de": "Drucker abfragen",
+        "es": "Leer una impresora"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "Reads the printer now and passes on its page count, lowest supply and status to the next actions.",
+        "fr": "Lit l'imprimante maintenant et transmet aux actions suivantes ses pages, son consommable le plus bas et son état.",
+        "de": "Fragt den Drucker sofort ab und gibt Seitenzahl, niedrigsten Füllstand und Status an die nächsten Aktionen weiter.",
+        "es": "Lee la impresora ahora y pasa a las acciones siguientes sus páginas, su consumible más bajo y su estado."
+      },
+      "timeout_seconds": 20,
       "fields": [
         {
-          "key": "device",
+          "key": "printer",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "label": {
+            "en": "Printer",
+            "fr": "Imprimante",
+            "de": "Drucker",
+            "es": "Impresora"
+          },
           "required": true
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
+          "key": "reachable",
           "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "label": {
+            "en": "Printer answered",
+            "fr": "L'imprimante a répondu",
+            "de": "Drucker hat geantwortet",
+            "es": "La impresora respondió"
+          }
+        },
+        {
+          "key": "status",
+          "type": "string",
+          "label": {
+            "en": "Message on the display",
+            "fr": "Message de l'écran",
+            "de": "Meldung im Display",
+            "es": "Mensaje de la pantalla"
+          }
+        },
+        {
+          "key": "pages_printed",
+          "type": "number",
+          "label": {
+            "en": "Pages printed",
+            "fr": "Pages imprimées",
+            "de": "Gedruckte Seiten",
+            "es": "Páginas impresas"
+          }
+        },
+        {
+          "key": "lowest_supply",
+          "type": "string",
+          "label": {
+            "en": "Lowest supply",
+            "fr": "Consommable le plus bas",
+            "de": "Niedrigstes Verbrauchsmaterial",
+            "es": "Consumible más bajo"
+          }
+        },
+        {
+          "key": "lowest_supply_percent",
+          "type": "number",
+          "label": {
+            "en": "Lowest supply (%)",
+            "fr": "Consommable le plus bas (%)",
+            "de": "Niedrigster Füllstand (%)",
+            "es": "Consumible más bajo (%)"
+          }
+        },
+        {
+          "key": "alerts",
+          "type": "string",
+          "label": {
+            "en": "Alerts",
+            "fr": "Alertes",
+            "de": "Meldungen",
+            "es": "Alertas"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "supplies",
+      "label": {
+        "en": "Brother supplies",
+        "fr": "Consommables Brother",
+        "de": "Brother-Verbrauchsmaterial",
+        "es": "Consumibles Brother"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Toner or ink gauges, wear parts, status and alerts of one Brother printer.",
+        "fr": "Jauges de toner ou d'encre, pièces d'usure, état et alertes d'une imprimante Brother.",
+        "de": "Toner- oder Tintenstände, Verschleißteile, Status und Meldungen eines Brother-Druckers.",
+        "es": "Indicadores de tóner o tinta, piezas de desgaste, estado y alertas de una impresora Brother."
+      },
+      "icon": "printer",
+      "settings": [
+        {
+          "key": "printer",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Printer",
+            "fr": "Imprimante",
+            "de": "Drucker",
+            "es": "Impresora"
+          },
+          "description": {
+            "en": "Leave empty to show the first printer added to Gladys.",
+            "fr": "Laissez vide pour afficher la première imprimante ajoutée à Gladys.",
+            "de": "Leer lassen, um den ersten zu Gladys hinzugefügten Drucker anzuzeigen.",
+            "es": "Déjelo vacío para mostrar la primera impresora añadida a Gladys."
+          },
+          "required": false
+        }
+      ],
+      "action_timeout_seconds": 30
     }
   ]
 }
