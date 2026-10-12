@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-12
+
 ### Added
 
 - Brother printers and multifunction devices read over SNMP (v1 or v2c) on the
@@ -33,3 +35,6 @@ the notes of the version's GitHub Release.
   alerts for the next actions of the scene.
 - Sensor names and texts in English, French, German and Spanish (French by
   default).
+
+[Unreleased]: https://github.com/guim31/gladys-brother/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-brother/releases/tag/v1.0.0
