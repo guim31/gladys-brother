@@ -62,7 +62,7 @@ responding`. The levels keep their last known value.
    disabled on the printer.
 5. **Reading interval**: 60 seconds by default (30 to 3600). Each reading is
    a single small SNMP request per printer.
-6. **Language of the names**: the language of the sensor names of the printers
+6. **Language of the names** (French by default): the language of the sensor names of the printers
    you add from now on, and of the texts sent to scenes. Names are fixed when
    the device is added.
 

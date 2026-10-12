@@ -15,7 +15,7 @@ export const DEFAULT_CONFIG = {
   printer_hosts: '',
   snmp_version: '1',
   poll_interval: 60,
-  language: 'en',
+  language: 'fr',
 };
 
 // An IPv4 address or a DNS name. mDNS names (`brother.local`) do not resolve

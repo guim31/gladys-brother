@@ -22,7 +22,8 @@ const table = JSON.parse(
 );
 
 const scenarios = [
-  { label: 'English names, SNMP v1', config: {} },
+  { label: 'English names, SNMP v1', config: { language: 'en' } },
+  { label: 'default language', config: { language: undefined } },
   { label: 'French names', config: { language: 'fr' } },
   { label: 'German names', config: { language: 'de' } },
   { label: 'Spanish names, SNMP v2c', config: { language: 'es', snmp_version: '2c' } },

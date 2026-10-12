@@ -14,7 +14,7 @@ test('defaults', () => {
     community: 'public',
     snmpVersion: '1',
     pollIntervalSeconds: DEFAULT_CONFIG.poll_interval,
-    language: 'en',
+    language: 'fr',
   });
 });
 
@@ -44,5 +44,5 @@ test('community, version, interval and language', () => {
   assert.equal(normalizeConfig({ poll_interval: 99999 }).pollIntervalSeconds, 3600);
   assert.equal(normalizeConfig({ community: '' }).community, 'public');
   assert.equal(normalizeConfig({ snmp_version: '3' }).snmpVersion, '1');
-  assert.equal(normalizeConfig({ language: 'it' }).language, 'en');
+  assert.equal(normalizeConfig({ language: 'it' }).language, 'fr');
 });

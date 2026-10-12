@@ -65,7 +65,7 @@ Das Abzeichen des Geräts zeigt **lokal**, solange der Drucker antwortet, und
    am Drucker deaktiviert ist.
 5. **Abfrageintervall**: standardmäßig 60 Sekunden (30 bis 3600). Jede
    Abfrage ist eine einzige kleine SNMP-Anfrage pro Drucker.
-6. **Sprache der Namen**: die Sprache der Sensornamen der Drucker, die du ab
+6. **Sprache der Namen** (standardmäßig Französisch): die Sprache der Sensornamen der Drucker, die du ab
    jetzt hinzufügst, und der Texte, die an Szenen gehen. Die Namen werden beim
    Hinzufügen des Geräts festgelegt.
 

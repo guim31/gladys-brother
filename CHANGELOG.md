@@ -31,4 +31,5 @@ the notes of the version's GitHub Release.
   cover open…, with the message on the display).
 - Scene action **Read a printer**: pages printed, lowest supply, status and
   alerts for the next actions of the scene.
-- Sensor names and texts in English, French, German and Spanish.
+- Sensor names and texts in English, French, German and Spanish (French by
+  default).

@@ -67,7 +67,7 @@ connue.
    seulement si la v1 est désactivée sur l'imprimante.
 5. **Intervalle de lecture** : 60 secondes par défaut (30 à 3600). Chaque
    lecture est une seule petite requête SNMP par imprimante.
-6. **Langue des noms** : la langue des noms des capteurs des imprimantes que
+6. **Langue des noms** (français par défaut) : la langue des noms des capteurs des imprimantes que
    vous ajouterez désormais, et des textes envoyés aux scènes. Les noms sont
    figés à l'ajout de l'appareil.
 

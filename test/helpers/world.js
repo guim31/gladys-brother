@@ -55,7 +55,8 @@ export async function createWorld({
   const network = createFakeNetwork(printers);
   const entries = mdns === undefined ? printers.map((printer) => mdnsEntry(printer)) : mdns;
   const gladys = createFakeGladys({
-    config,
+    // The tests read English names unless they choose a language.
+    config: { language: 'en', ...config },
     devices: gladysDevices,
     scanResults: { mdns: entries ?? [] },
   });

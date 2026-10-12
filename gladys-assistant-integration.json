@@ -133,7 +133,7 @@
         "es": "Nombres de los sensores de las impresoras añadidas a partir de ahora, y textos enviados a las escenas."
       },
       "required": false,
-      "default": "en",
+      "default": "fr",
       "options": [
         {
           "value": "en",

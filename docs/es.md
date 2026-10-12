@@ -65,7 +65,7 @@ entonces `No responde`. Los niveles conservan su último valor conocido.
    si la v1 está desactivada en la impresora.
 5. **Intervalo de lectura**: 60 segundos por defecto (de 30 a 3600). Cada
    lectura es una sola petición SNMP pequeña por impresora.
-6. **Idioma de los nombres**: el idioma de los nombres de los sensores de las
+6. **Idioma de los nombres** (francés por defecto): el idioma de los nombres de los sensores de las
    impresoras que añada a partir de ahora, y de los textos enviados a las
    escenas. Los nombres se fijan al añadir el dispositivo.
 
