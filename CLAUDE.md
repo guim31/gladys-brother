@@ -49,9 +49,11 @@ src/actions.js                    `test_printer` manifest action
 src/texts.js                      every text of the container, four languages
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
 src/store.js                      /data/brother-state.json (fired steps, last alerts)
+src/logGate.js                    repeated failures logged once (warn, then debug, info on recovery)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
 docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en/fr mandatory)
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+test/logs.test.js                 what reaches docker logs at info; the container timer without onPoll
 test/helpers/fakePrinter.js       simulated Brother SNMP agents answering real BER bytes
 test/fixtures/printers/           14 real printer answers (brother library), wire format
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
@@ -124,6 +126,11 @@ code de ce dépôt. Compléter ce fichier quand un nouveau piège est découvert
   15000, 30000, 60000). Le template publie `poll_frequency: 300` sans `should_poll` : c'est faux,
   le cœur répond 400 à la découverte. Pour une cadence hors liste, publier `should_poll: false` et
   pousser les états depuis le conteneur, en gardant un `onPoll` de repli.
+- **Piège du cœur 5.2.0** (GladysAssistant/Gladys#3198, correctif #3199 pas encore publié) : les
+  appareils **déjà créés** sans `should_poll` ne sont **jamais** sondés, même après correction. Ne
+  jamais compter sur `onPoll` seul : ici, `should_poll: false` et un `setInterval` dans le
+  conteneur (`PrinterMonitor.startTimer`), `onPoll` gardé en repli. `test/logs.test.js` le prouve
+  (minuteur simulé, `onPoll` neutralisé, les imprimantes sont lues quand même).
 - **`min` et `max` sont NOT NULL** dans `t_device_feature`, y compris pour `text/text` : sans eux,
   « Ajouter à Gladys » échoue en HTTP 422. Mettre 0/0, comme Zigbee2MQTT.
 - Un état publié sur une fonctionnalité **pas encore ajoutée** dans Gladys reçoit un 200 puis est
@@ -299,7 +306,17 @@ Assistant, dont le décodage est porté ici :
 - Fonctionnalités : cartouches en `level-sensor/liquid-level-percent` (comme gladys-ipp), pièces
   en `maintenance/life-remaining`, pages et compteurs en `counter-sensor/integer`, temps de
   fonctionnement en `duration/integer` **en heures** (en secondes, il changerait à chaque lecture).
-- `community` est un champ `secret` de la config (vide = `public`).
+- `community` est un champ `secret` de la config (vide = `public`). Elle n'apparaît dans aucun
+  log, même en `debug` (vérifié par `test/logs.test.js`).
+- **Logs** (logger du SDK, niveau par `LOG_LEVEL` : `debug|info|warn|error|silent`, `info` par
+  défaut, documenté dans la section Dépannage). En `info`, le cycle de vie seulement : démarrage,
+  imprimante trouvée **pour la première fois ou à une nouvelle adresse**, « is not responding » /
+  « is responding again » (une ligne chacun), événements de scène, erreurs. Une redécouverte qui
+  retrouve les mêmes imprimantes, ou qui échoue sur l'adresse d'une imprimante connue éteinte,
+  écrit en `debug` (`createDiscoveryMemory`). Les échecs répétés (états, `publishDiscoveredDevices`,
+  redécouverte, mDNS indisponible, boucle de lecture, écriture de `/data`) passent par
+  `createLogGate` : un `warn` au premier, une ligne `info` au rétablissement, `debug` entre les
+  deux. Un cycle de lecture normal n'écrit rien en `info` (test).
 
 ## Non vérifié (pas d'imprimante)
 

@@ -10,6 +10,19 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Changed
+
+- Quieter logs: a printer switched off for the night now writes one line when
+  it stops answering and one when it comes back, instead of repeating lines at
+  every automatic search. A repeated error is written once, then once more
+  when it is solved. Every reading and discovery is still available with the
+  environment variable `LOG_LEVEL=debug` (see Troubleshooting).
+
+### Fixed
+
+- A printer coming back after being unreachable is now logged ("is responding
+  again").
+
 ## [1.0.0] - 2026-10-12
 
 ### Added

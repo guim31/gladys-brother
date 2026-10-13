@@ -140,6 +140,12 @@ en un mensaje: «{impresora} ha impreso {páginas} páginas, consumible más baj
 - **Un valor parece incorrecto**: indíquelo en el foro de Gladys con su
   modelo; los registros de la integración (nivel `debug`) muestran cada
   lectura.
+- **Registros**: por defecto, la integración solo escribe su inicio, las
+  impresoras encontradas, una impresora que deja de responder o que vuelve, y
+  los errores (un error repetido una sola vez, y luego una línea cuando se
+  resuelve). Para ver cada lectura y cada descubrimiento, inicie el contenedor
+  con la variable de entorno `LOG_LEVEL=debug` (`info` por defecto; también
+  `warn`, `error`, `silent`). La comunidad SNMP nunca aparece en los registros.
 
 ## Limitaciones
 

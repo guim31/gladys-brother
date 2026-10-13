@@ -133,6 +133,12 @@ message: "{printer} has printed {pages} pages, lowest supply: {name}
   later, the **Discover** tab offers to update the device.
 - **A value looks wrong**: please report it on the Gladys forum with your
   model; the integration logs (level `debug`) show each reading.
+- **Logs**: by default the integration only writes its start, the printers
+  found, a printer that stops answering or comes back, and errors (a repeated
+  error once, then a line when it is solved). For every reading and every
+  discovery, start the container with the environment variable
+  `LOG_LEVEL=debug` (`info` by default; also `warn`, `error`, `silent`). The
+  SNMP community never appears in the logs.
 
 ## Limits
 

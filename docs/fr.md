@@ -143,6 +143,13 @@ consommable le plus bas : {nom} {pourcentage} % ».
   plus tard, l'onglet **Découverte** propose de mettre à jour l'appareil.
 - **Une valeur semble fausse** : signalez-la sur le forum de Gladys avec votre
   modèle ; les logs de l'intégration (niveau `debug`) montrent chaque lecture.
+- **Logs** : par défaut, l'intégration n'écrit que son démarrage, les
+  imprimantes trouvées, une imprimante qui ne répond plus ou qui revient, et les
+  erreurs (une erreur répétée une seule fois, puis une ligne quand elle est
+  résolue). Pour voir chaque lecture et chaque découverte, lancez le conteneur
+  avec la variable d'environnement `LOG_LEVEL=debug` (`info` par défaut ; aussi
+  `warn`, `error`, `silent`). La communauté SNMP n'apparaît jamais dans les
+  logs.
 
 ## Limites
 
