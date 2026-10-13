@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-13
+
 ### Changed
 
 - Quieter logs: a printer switched off for the night now writes one line when
@@ -49,5 +51,6 @@ the notes of the version's GitHub Release.
 - Sensor names and texts in English, French, German and Spanish (French by
   default).
 
-[Unreleased]: https://github.com/guim31/gladys-brother/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/guim31/gladys-brother/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/guim31/gladys-brother/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/guim31/gladys-brother/releases/tag/v1.0.0

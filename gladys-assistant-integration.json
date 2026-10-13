@@ -8,8 +8,8 @@
     "de": "Toner, Tinte, Trommel und Seitenzähler deiner Brother-Drucker per SNMP. Lokal, ohne Cloud.",
     "es": "Tóner, tinta, tambor y contadores de páginas de sus impresoras Brother por SNMP. Local."
   },
-  "version": "1.0.0",
-  "docker_image": "ghcr.io/guim31/gladys-brother:1.0.0",
+  "version": "1.0.1",
+  "docker_image": "ghcr.io/guim31/gladys-brother:1.0.1",
   "gladys_version": ">=5.1.0",
   "categories": ["appliances", "network"],
   "cover_image": "https://raw.githubusercontent.com/guim31/gladys-brother/main/cover.png",
