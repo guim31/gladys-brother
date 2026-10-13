@@ -11,6 +11,7 @@
 import { createLogger, parseMdnsTxt } from '@gladysassistant/integration-sdk';
 import { readPrinter } from './brother/reader.js';
 import { platformId } from './features.js';
+import { createLogGate } from './logGate.js';
 
 const logger = createLogger({ name: 'brother-discovery' });
 
@@ -50,17 +51,31 @@ export function entryAddress(entry) {
 }
 
 /**
+ * What the discoveries of this process have already seen: the printers found
+ * (serial-based id -> address) and the failures already reported.
+ */
+export function createDiscoveryMemory() {
+  return { printers: new Map(), gate: createLogGate(logger) };
+}
+
+/**
  * Discover the printers: probe the manual hosts and the mDNS candidates, keep
  * one entry per serial number.
  * @param {object} gladys SDK instance
  * @param {object} config normalized configuration
- * @param {{ snmp: object, scanTimeoutSeconds?: number }} options `snmp` = the
- *   readPrinter options (transport, community, version, timeouts, cache)
+ * @param {{ snmp: object, scanTimeoutSeconds?: number, memory?: object }} options
+ *   `snmp` = the readPrinter options (transport, community, version, timeouts,
+ *   cache); `memory` = what earlier discoveries saw (createDiscoveryMemory),
+ *   so a rediscovery only logs news at info level
  * @returns {Promise<{ printers: Array<{ host: string, reading: object }>,
  *                     failures: Array<{ host: string, error: Error }>,
  *                     mdns: 'ok'|'unavailable' }>}
  */
-export async function discoverPrinters(gladys, config, { snmp, scanTimeoutSeconds = 5 }) {
+export async function discoverPrinters(
+  gladys,
+  config,
+  { snmp, scanTimeoutSeconds = 5, memory = createDiscoveryMemory() },
+) {
   const candidates = [...config.hosts];
   let mdns = 'ok';
   try {
@@ -74,7 +89,10 @@ export async function discoverPrinters(gladys, config, { snmp, scanTimeoutSecond
     }
   } catch (err) {
     mdns = 'unavailable';
-    logger.warn(`mDNS scan unavailable (${err.message}): manual list only`);
+    memory.gate.failure('mdns', `mDNS scan unavailable (${err.message}): manual list only`);
+  }
+  if (mdns === 'ok') {
+    memory.gate.success('mdns', 'mDNS scan available again');
   }
 
   const printers = [];
@@ -89,10 +107,24 @@ export async function discoverPrinters(gladys, config, { snmp, scanTimeoutSecond
       }
       seen.add(id);
       printers.push({ host, reading });
-      logger.info(`Found Brother ${reading.model} (${reading.printerType}) at ${host}`);
+      memory.gate.success(`host:${host}`);
+      const message = `Found Brother ${reading.model} (${reading.printerType}) at ${host}`;
+      if (memory.printers.get(id) === host) {
+        logger.debug(message); // nothing new: a rediscovery finds it again
+      } else {
+        logger.info(message); // a new printer, or one that changed address
+      }
+      memory.printers.set(id, host);
     } catch (err) {
       failures.push({ host, error: err });
-      logger.warn(`No Brother printer read at ${host}: ${err.message}`);
+      const message = `No Brother printer read at ${host}: ${err.message}`;
+      if ([...memory.printers.values()].includes(host)) {
+        // A known printer switched off: the monitor already says it is not
+        // responding.
+        logger.debug(message);
+      } else {
+        memory.gate.failure(`host:${host}`, message);
+      }
     }
   }
   return { printers, failures, mdns };

@@ -12,7 +12,7 @@ import { registerHandlers } from '../../src/app.js';
 import { Store } from '../../src/store.js';
 import { FIXTURES, createFakeNetwork, createPrinter } from './fakePrinter.js';
 
-// The integration logs every reading; keep the test output readable.
+// Keep the test output readable (the tests that check the logs capture them).
 // LOG_LEVEL=debug npm test shows them.
 process.env.LOG_LEVEL ??= 'silent';
 
@@ -42,6 +42,9 @@ export function mdnsEntry(printer, { service = '_printer._tcp' } = {}) {
  * @param {boolean} [options.connect]
  * @param {string} [options.dataDir]
  * @param {() => Date} [options.now]
+ * @param {boolean} [options.timers] the container's own reading timer
+ * @param {(gladys: object) => void} [options.beforeRegister] tweak the fake
+ *   before the handlers are registered
  */
 export async function createWorld({
   printers = allPrinters(),
@@ -51,6 +54,8 @@ export async function createWorld({
   connect = true,
   dataDir = mkdtempSync(join(tmpdir(), 'gladys-brother-')),
   now,
+  timers = false,
+  beforeRegister,
 } = {}) {
   const network = createFakeNetwork(printers);
   const entries = mdns === undefined ? printers.map((printer) => mdnsEntry(printer)) : mdns;
@@ -65,10 +70,11 @@ export async function createWorld({
       throw new Error('403 mDNS discovery not declared');
     };
   }
+  beforeRegister?.(gladys);
   const app = registerHandlers(gladys, {
     store: new Store(dataDir),
     transport: network,
-    timers: false,
+    timers,
     snmpTiming: { timeoutMs: 5, retries: 1 },
     now,
   });

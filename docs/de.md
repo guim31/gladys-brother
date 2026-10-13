@@ -141,6 +141,13 @@ Seiten gedruckt, niedrigster Füllstand: {Name} {Prozent} %“.
   auf, bietet der Tab **Entdecken** an, das Gerät zu aktualisieren.
 - **Ein Wert scheint falsch**: Melde ihn bitte im Gladys-Forum mit deinem
   Modell; die Protokolle der Integration (Stufe `debug`) zeigen jede Abfrage.
+- **Protokolle**: Standardmäßig schreibt die Integration nur ihren Start, die
+  gefundenen Drucker, einen Drucker, der nicht mehr antwortet oder
+  zurückkommt, und Fehler (ein wiederholter Fehler nur einmal, dann eine Zeile,
+  wenn er behoben ist). Für jede Abfrage und jede Suche startest du den
+  Container mit der Umgebungsvariable `LOG_LEVEL=debug` (Standard `info`; auch
+  `warn`, `error`, `silent`). Die SNMP-Community erscheint nie in den
+  Protokollen.
 
 ## Einschränkungen
 

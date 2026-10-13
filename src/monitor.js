@@ -17,7 +17,8 @@
 // -----------------------------------------------------------------------------
 
 import { createLogger } from '@gladysassistant/integration-sdk';
-import { discoverPrinters } from './discovery.js';
+import { createDiscoveryMemory, discoverPrinters } from './discovery.js';
+import { createLogGate } from './logGate.js';
 import { readPrinter } from './brother/reader.js';
 import {
   DEVICE_TYPE,
@@ -69,6 +70,8 @@ export class PrinterMonitor {
     this.inFlight = new Map();
     this.lastDiscovery = { printers: [], failures: [], mdns: 'ok' };
     this.lastRediscovery = 0;
+    this.discoveryMemory = createDiscoveryMemory();
+    this.logGate = createLogGate(logger);
     this.rediscoveryWanted = false;
     this.timer = null;
     this.loop = null;
@@ -118,7 +121,10 @@ export class PrinterMonitor {
       return;
     }
     this.timer = setInterval(() => {
-      this.pollAll().catch((err) => logger.error('Reading loop failed', err));
+      this.pollAll().then(
+        () => this.logGate.success('loop', 'Reading loop working again'),
+        (err) => this.logGate.failure('loop', `Reading loop failed: ${err.message}`),
+      );
     }, this.config.pollIntervalSeconds * 1000);
     this.timer.unref?.();
   }
@@ -179,7 +185,10 @@ export class PrinterMonitor {
   // --- Discovery -------------------------------------------------------------
 
   async discover() {
-    const result = await discoverPrinters(this.gladys, this.config, { snmp: this.snmpOptions() });
+    const result = await discoverPrinters(this.gladys, this.config, {
+      snmp: this.snmpOptions(),
+      memory: this.discoveryMemory,
+    });
     this.lastDiscovery = result;
     this.lastRediscovery = this.now().getTime();
     const devices = result.printers.map((printer) => {
@@ -191,8 +200,12 @@ export class PrinterMonitor {
       // Upserts the params (HOST) of the printers already created: a printer
       // that changed address is found again.
       await this.gladys.publishDiscoveredDevices(devices);
+      this.logGate.success('discovered', 'Discovered printers accepted by Gladys again');
     } catch (err) {
-      logger.error(`publishDiscoveredDevices refused by Gladys: ${err.message}`);
+      this.logGate.failure(
+        'discovered',
+        `publishDiscoveredDevices refused by Gladys: ${err.message}`,
+      );
       throw err;
     }
     return result;
@@ -284,6 +297,9 @@ export class PrinterMonitor {
 
     const previous = snapshot.reading;
     const wasUnreachable = snapshot.reachable === false;
+    if (wasUnreachable) {
+      logger.info(`${device.name} (${host}) is responding again`);
+    }
     Object.assign(snapshot, {
       reading,
       at: this.now(),
@@ -337,8 +353,9 @@ export class PrinterMonitor {
         this.gladys.forgetPublishedStates(deviceId);
       }
       await this.gladys.publishChangedStates(states);
+      this.logGate.success(`states:${deviceId}`, `States of ${deviceId} accepted again`);
     } catch (err) {
-      logger.warn(`States of ${deviceId} refused: ${err.message}`);
+      this.logGate.failure(`states:${deviceId}`, `States of ${deviceId} refused: ${err.message}`);
     }
   }
 
@@ -364,8 +381,9 @@ export class PrinterMonitor {
     this.rediscoveryWanted = false;
     try {
       await this.discover();
+      this.logGate.success('rediscovery');
     } catch (err) {
-      logger.warn(`Rediscovery failed: ${err.message}`);
+      this.logGate.failure('rediscovery', `Rediscovery failed: ${err.message}`);
     }
   }
 
@@ -426,9 +444,10 @@ export class PrinterMonitor {
     for (const event of events) {
       try {
         await this.gladys.publishSceneEvent(event.key, event.data);
+        this.logGate.success('scene-event', 'Scene events accepted again');
         logger.info(`Scene event ${event.key} for ${device.name}`);
       } catch (err) {
-        logger.warn(`Scene event ${event.key} refused: ${err.message}`);
+        this.logGate.failure('scene-event', `Scene event ${event.key} refused: ${err.message}`);
       }
     }
   }
