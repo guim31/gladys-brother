@@ -1,6 +1,6 @@
 {
   "name": "gladys-brother",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Gladys Assistant integration: Brother printers over SNMP (toner, ink, drum, wear parts, page counters, status).",
   "type": "module",
